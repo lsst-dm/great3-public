@@ -1383,9 +1383,7 @@ class DrawPSFBuilder(PSFBuilder):
         self.multiepoch = multiepoch
         self.variable_psf = False # by definition, so it doesn't get passed in as an arg
         self.shear_type = shear_type
-        image = galsim.InterpolatedImage("test.fits")
-        im = image.drawImage(method="sb", nx=144, ny=144, scale=.2)
-        self.use_aber = []
+        #self.use_aber = []
 
     def generateFieldParameters(self, rng, field_index):
         schema = []
@@ -1430,7 +1428,7 @@ class DrawPSFBuilder(PSFBuilder):
         # expanding those which are not already there from the hdus
         for record in catalog:
             # select a random hdu
-            psf_number = int(math.floor(rng() * psf_count)) 
+            psf_number = int(math.floor(rng() * psf_count)) + 1 
             record["psf_number"] = psf_number
             filename = format%psf_number
             if not os.path.exists(filename):

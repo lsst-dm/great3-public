@@ -108,7 +108,8 @@ class SimBuilder(object):
                                                               shear_type=shear_type,
                                                               multiepoch=self.multiepoch,
                                                               gal_dir=gal_dir,
-                                                              preload=preload)
+                                                              preload=preload,
+                                                              gal_pairs=None)
         self.noise_builder = great3sims.noise.makeBuilder(obs_type=obs_type,
                                                           multiepoch=self.multiepoch,
                                                           variable_psf = self.variable_psf)
