@@ -46,6 +46,7 @@ class SimBuilder(object):
     experiment = None
     real_galaxy = False
     variable_psf = False
+    draw_psf_src = None
     multiepoch = False
 
     @staticmethod
@@ -64,7 +65,7 @@ class SimBuilder(object):
         return cls
 
     def __init__(self, root, obs_type, shear_type, gal_dir, ps_dir, opt_psf_dir, atmos_ps_dir,
-                 public_dir, truth_dir, preload=False, nproc=-1, gal_pairs=True):
+                 public_dir, draw_psf_src, truth_dir, preload=False, nproc=-1):
         """Initialize a builder for the given `obs_type` and `shear_type`.
 
         @param[in] root         Root directory for generated files.
@@ -81,15 +82,15 @@ class SimBuilder(object):
                                 numbers of real galaxies?  Note that for parametric galaxy branches,
                                 the catalog is never preloaded. [default = False]
         @param[in] nproc        How many processes to use in the config file.  [default = -1]
-        @param[in] gal_pairs    For constant shear branches, should it use 90 degree rotated pairs
-                                to cancel out shape noise, or not?  This option is ignored for
-                                variable shear branches. [default: True]
+        @param[in] draw_psf_src    Draw psf from a distribution?
         """
+
         self.obs_type = obs_type
         self.shear_type = shear_type
         self.public_dir = public_dir
         self.truth_dir = truth_dir
         self.preload = preload
+        self.draw_psf_src = draw_psf_src
         # Below we initialize the builders for the PSF, shear, galaxy population, and noise field.
         # They each require various bits of information as appropriate (e.g., only the PSF builder
         # needs to know where information about atmospheric PSFs lives).
@@ -98,7 +99,8 @@ class SimBuilder(object):
                                                       multiepoch=self.multiepoch,
                                                       shear_type=self.shear_type,
                                                       opt_psf_dir=opt_psf_dir,
-                                                      atmos_ps_dir=atmos_ps_dir)
+                                                      atmos_ps_dir=atmos_ps_dir,
+                                                      draw_psf_src=draw_psf_src)
         self.shear_builder = great3sims.shear.makeBuilder(shear_type=shear_type, obs_type=obs_type,
                                                           multiepoch=self.multiepoch, ps_dir=ps_dir)
         self.galaxy_builder = great3sims.galaxies.makeBuilder(real_galaxy=self.real_galaxy,
@@ -106,8 +108,7 @@ class SimBuilder(object):
                                                               shear_type=shear_type,
                                                               multiepoch=self.multiepoch,
                                                               gal_dir=gal_dir,
-                                                              preload=preload,
-                                                              gal_pairs=gal_pairs)
+                                                              preload=preload)
         self.noise_builder = great3sims.noise.makeBuilder(obs_type=obs_type,
                                                           multiepoch=self.multiepoch,
                                                           variable_psf = self.variable_psf)
@@ -268,7 +269,8 @@ class SimBuilder(object):
                         noise_mult = 1.
                     else:
                         noise_mult = constants.deep_variance_mult
-                    if self.obs_type == "ground":
+
+                    if self.obs_type == "ground" and not self.draw_psf_src:
                         epoch_parameters["noise"] = \
                             self.noise_builder.generateEpochParameters(
                                     rng, subfield_index, epoch_index,
@@ -361,23 +363,23 @@ class SimBuilder(object):
         # We give the galaxy catalog generation routine a value for seeing to use when selecting
         # galaxies.  This calculation becomes more complex in the multi-epoch case since we have to
         # decide on a relevant effective FWHM.
-        if self.obs_type == "space":
-            effective_seeing = None
-        else:
+        effective_seeing = None
+        if not self.obs_type == "space":
             # Note: really we care about the full PSF FWHM, not just the atmospheric part.  However,
             # we use the seeing as a proxy for it, so we don't have to start generating images.  If
             # this seems really worrisome, we could make some simple sims, derive approximate rules
             # for total PSF size including optics as well (which will mainly affect really
             # good-seeing images), and use those instead of just the atmospheric seeing.
-            if not self.multiepoch and not self.variable_psf:
-                # For single epoch images with a constant PSF, the FWHM is just a single (scalar)
-                # value for the entire subfield.
-                effective_seeing = field_parameters["psf"]["atmos_psf_fwhm"]
-            else:
-                # This is a 1d numpy array of FWHM values.  We determine a single effective seeing
-                # value from it.
-                seeing = field_parameters["psf"]["atmos_psf_fwhm"]
-                effective_seeing = 1. / numpy.mean(1./seeing)
+            if not self.draw_psf_src:
+                if not self.multiepoch and not self.variable_psf:
+                    # For single epoch images with a constant PSF, the FWHM is just a single (scalar)
+                    # value for the entire subfield.
+                    effective_seeing = field_parameters["psf"]["atmos_psf_fwhm"]
+                else:
+                    # This is a 1d numpy array of FWHM values.  We determine a single effective seeing
+                    # value from it.
+                    seeing = field_parameters["psf"]["atmos_psf_fwhm"]
+                    effective_seeing = 1. / numpy.mean(1./seeing)
         # The galaxy builder generates a catalog given some noise variance information (which
         # determines galaxy S/N), and the effective seeing (for selecting galaxies that are
         # resolved).
@@ -1406,9 +1408,8 @@ class SimBuilder(object):
         template, reader, writer = root_rel_mapper.mappings['star_test_images']
         infile = os.path.join(root_rel_mapper.full_dir, template % {}) + '.fits'
         outfile = os.path.join(sub_mapper.full_dir, template % {}) + '.fits'
-        if os.path.exists(infile):
-            shutil.copy2(infile, outfile)
-            tar.add(outfile)
+        shutil.copy2(infile, outfile)
+        tar.add(outfile)
 
         # Now do all the per-subfield stuff.
         for subfield_index in xrange(subfield_min, subfield_max+1):
