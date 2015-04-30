@@ -1,0 +1,34 @@
+README for galaxy generation yaml tests
+April 20, 2015
+
+This directory contains some simple test scripts which can generate galaxy images
+from either parameterized or real_galaxies convolved with Psfs supplied from fits
+files.  Currently, these tests use the real_galaxy data from the COSMOS 23.5 
+training set, though we intend to exchange these for PhoSim and HSC Psf images
+as soon as possible.
+
+1. Untar COSMOS_23.5_training_sample.tar.gz and great3_galaxy_selection_files.tar.gz.
+   This is the "gals" directory which must be passed to great3sims.run.
+   I have these in a directory at the same level as great3-public, named
+   COSMOS_23.5_training_sample.
+
+To use parameterized galaxies:
+
+2. Run the program 'python control.py'
+
+3. Run 'galsim cgc.yaml'.
+
+4. The results are place in tests/control/ground/constant.
+
+To run the real_galaxy test,
+
+2. Run the program 'python real_galaxy.py' for parameterized galaxies.
+
+3. Run 'galsim rgc.yaml'.
+
+4. The results are place in tests/real_galaxy/ground/constant.
+
+
+Using the default constants.py creates a very long run.  If you are just doing a trial,
+replace great3sims/constants.py with the file tests/great3sims/constants.small.
+This will run with only one subfield and a 10x10 galaxy sample.

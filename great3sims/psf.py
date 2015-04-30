@@ -1,3 +1,5 @@
+# Copyright (c) 2014, the GREAT3 executive committee (http://www.great3challenge.info/?q=contacts)
+# All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification, are permitted
 # provided that the following conditions are met:
@@ -1432,7 +1434,7 @@ class DrawPSFBuilder(PSFBuilder):
             record["psf_number"] = psf_number
             filename = format%psf_number
             if not os.path.exists(filename):
-                psf = pyfits.PrimaryHDU(hdus[psf_number].data)
+                psf = pyfits.PrimaryHDU(hdus[psf_number-1].data)
                 psf.header.append("GS_SCALE")
                 psf.header["GS_SCALE"] = 0.02
                 psf.writeto(filename)

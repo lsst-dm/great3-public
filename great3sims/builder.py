@@ -65,7 +65,7 @@ class SimBuilder(object):
         return cls
 
     def __init__(self, root, obs_type, shear_type, gal_dir, ps_dir, opt_psf_dir, atmos_ps_dir,
-                 public_dir, draw_psf_src, truth_dir, preload=False, nproc=-1):
+                 public_dir, draw_psf_src, truth_dir, preload=False, nproc=-1, gal_pairs=True):
         """Initialize a builder for the given `obs_type` and `shear_type`.
 
         @param[in] root         Root directory for generated files.
@@ -82,9 +82,11 @@ class SimBuilder(object):
                                 numbers of real galaxies?  Note that for parametric galaxy branches,
                                 the catalog is never preloaded. [default = False]
         @param[in] nproc        How many processes to use in the config file.  [default = -1]
-        @param[in] draw_psf_src    Draw psf from a distribution?
+        @param[in] gal_pairs    For constant shear branches, should it use 90 degree rotated pairs
+                                to cancel out shape noise, or not?  This option is ignored for
+                                variable shear branches. [default: True]
+        @param[in] draw_psf_src Draw psf from a distribution?
         """
-
         self.obs_type = obs_type
         self.shear_type = shear_type
         self.public_dir = public_dir
@@ -109,7 +111,7 @@ class SimBuilder(object):
                                                               multiepoch=self.multiepoch,
                                                               gal_dir=gal_dir,
                                                               preload=preload,
-                                                              gal_pairs=None)
+                                                              gal_pairs=gal_pairs)
         self.noise_builder = great3sims.noise.makeBuilder(obs_type=obs_type,
                                                           multiepoch=self.multiepoch,
                                                           variable_psf = self.variable_psf)
@@ -1409,8 +1411,9 @@ class SimBuilder(object):
         template, reader, writer = root_rel_mapper.mappings['star_test_images']
         infile = os.path.join(root_rel_mapper.full_dir, template % {}) + '.fits'
         outfile = os.path.join(sub_mapper.full_dir, template % {}) + '.fits'
-        shutil.copy2(infile, outfile)
-        tar.add(outfile)
+        if os.path.exists(infile):
+            shutil.copy2(infile, outfile)
+            tar.add(outfile)
 
         # Now do all the per-subfield stuff.
         for subfield_index in xrange(subfield_min, subfield_max+1):
