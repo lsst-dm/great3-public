@@ -797,7 +797,7 @@ class COSMOSGalaxyBuilder(GalaxyBuilder):
             'rotate' : { 'type' : 'Rad',
                          'theta' : { 'type' : 'Catalog', 'col' : 'rot_angle_radians' } 
                        },
-            'whiten' : True
+            # remove this line because Galsim doesn't like it: 'whiten' : True
         }
         return d
 

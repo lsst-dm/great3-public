@@ -25,13 +25,17 @@
 """File containing the classes that generate parameters and catalogs for PSFs."""
 import galsim
 import numpy as np
+import math
+import os
+import pyfits
 from . import constants
 
-def makeBuilder(obs_type, variable_psf, multiepoch, shear_type, opt_psf_dir, atmos_ps_dir):
+def makeBuilder(obs_type, variable_psf, draw_psf_src, multiepoch, shear_type, opt_psf_dir, atmos_ps_dir):
     """Return a PSFBuilder appropriate for the given options.
 
     @param[in] obs_type     Observation type: either "ground" or "space".
     @param[in] variable_psf If True, we need a spatially-varying PSF.
+    @param[in] draw_psf_src If not None, defines source of a pool of PSF images from which to draw.
     @param[in] multiepoch   If True, this is a multiepoch simulation, and we are determining the PSF
                             of multiple exposures simultaneously.  If False, the PSF should be that
                             of a single exposure.
@@ -46,6 +50,8 @@ def makeBuilder(obs_type, variable_psf, multiepoch, shear_type, opt_psf_dir, atm
     if obs_type == "space" or obs_type == "ground":
         if variable_psf:
             return VariablePSFBuilder(obs_type, multiepoch, shear_type, opt_psf_dir, atmos_ps_dir)
+        elif draw_psf_src:
+            return DrawPSFBuilder(obs_type, multiepoch, shear_type, draw_psf_src)
         else:
             return ConstPSFBuilder(obs_type, multiepoch, shear_type)
     else:
@@ -1367,3 +1373,92 @@ class VariablePSFBuilder(PSFBuilder):
             atmos_psf.applyShear(e1 = record["atmos_psf_e1"],
                                  e2 = record["atmos_psf_e2"])
             return galsim.Convolve(atmos_psf, optical_psf)
+
+
+class DrawPSFBuilder(PSFBuilder):
+    """PSFBuilder for experiments with PSF drawn from a sample of images.
+
+    """
+    def __init__(self, obs_type, multiepoch, shear_type, draw_psf_src):
+        self.obs_type = obs_type
+        self.draw_psf_src = os.path.abspath(draw_psf_src)
+        self.multiepoch = multiepoch
+        self.variable_psf = False # by definition, so it doesn't get passed in as an arg
+        self.shear_type = shear_type
+        #self.use_aber = []
+
+    def generateFieldParameters(self, rng, field_index):
+        schema = []
+        psf_dict = dict(schema=schema)
+        return psf_dict
+
+    def generateEpochParameters(self, rng, subfield_index, epoch_index, field_parameters):
+        schema = [("psf_number", int),]
+        psf_dict = dict(schema=schema)
+        return psf_dict
+
+    def generateCatalog(self, rng, catalog, parameters, offsets, normalized):
+
+        # The catalog will contain an entry for each record 'psf_number'
+        # corresponding to the random psf assigned to this galaxy.  In
+        # this routine, the psfs are generated if they come from a single
+        # multiple hdu catalog.  But if the draw_psf_src file is not found,
+        # assume that the psfs will come from numbered files in the directory
+        # where the draw_psf_src file is supposed to be. In either case, if the
+        # draw_psf_src is named foo.fits, the psfs are named foo_n.fits.
+       
+        index = self.draw_psf_src.find('.fits')
+        if index < 0: format = self.draw_psf_src + '_%d'
+        else:
+            format = self.draw_psf_src[:index] + '_%d' + self.draw_psf_src[index:]
+
+        # if the file self.draw_psf_src exists, assume it is a multi-hdu
+        # file containing a collection of psfs, and open if for access
+        hdus = None
+        if os.path.exists(self.draw_psf_src):
+            hdus = pyfits.open(self.draw_psf_src)
+            psf_count = len(hdus)
+
+        # if not, just enumerate the individual numbered fits files in
+        # the same directory
+        else:
+            psf_count = 0
+            while os.path.exists(format%(psf_count+1,)):
+                psf_count += 1
+            print "psf_count = ", psf_count
+        # now randomly assign availabel psfs to the individual records,
+        # expanding those which are not already there from the hdus
+        for record in catalog:
+            # select a random hdu
+            psf_number = int(math.floor(rng() * psf_count)) + 1 
+            record["psf_number"] = psf_number
+            filename = format%psf_number
+            if not os.path.exists(filename):
+                psf = pyfits.PrimaryHDU(hdus[psf_number-1].data)
+                psf.header.append("GS_SCALE")
+                psf.header["GS_SCALE"] = 0.02
+                psf.writeto(filename)
+        if hdus: hdus.close()
+
+    def makeConfigDict(self, use_zero_index=True):
+        """Routine to write the PSF-related parts of the config file used by GalSim to generate
+        images."""
+        
+        index = self.draw_psf_src.find('.fits')
+        if index < 0: format = self.draw_psf_src + '_%d'
+        else:
+            format = self.draw_psf_src[:index] + '_%d' + self.draw_psf_src[index:]
+        
+        d = {
+            'type':'InterpolatedImage',
+            'image':
+                {
+                    'type': 'FormattedStr',
+                    'format' : format,
+                    'items' :  [{'col':'psf_number', 'type':'Catalog'}]
+                }
+        }
+        return d
+
+    def makeGalSimObject(self, record, parameters):
+        pass

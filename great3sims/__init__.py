@@ -37,6 +37,7 @@ def run(root, experiments=None, obs_type=None, shear_type=None, seed=10, steps=N
         gal_dir='/Users/rmandelb/great3/data-23.5', ps_dir='../inputs/shear-ps/tables',
         opt_psf_dir = '../inputs/optical-psfs',
         atmos_ps_dir = '../inputs/atmospsf/pk_math',
+        draw_psf_src = None,
         public_dir='public', truth_dir='truth', preload=False, nproc=-1,
         gal_pairs=True):
     """Top-level driver for GREAT3 simulation code.
@@ -129,6 +130,9 @@ def run(root, experiments=None, obs_type=None, shear_type=None, seed=10, steps=N
     @param[in] gal_pairs     For constant shear branches, should it use 90 degree rotated pairs to
                              cancel out shape noise, or not?  This option is ignored for variable
                              shear branches. [default: True]
+    @param[in] draw_psf_src  Fits file containing psf population as multiple hdus
+                             Or base filename of sequentially numbered fits files, where e.g.,
+                             psf.fits means psf_1.fits ... psf_n.fits.  Directory must be writable.
     """
     import sys
 
@@ -167,6 +171,7 @@ def run(root, experiments=None, obs_type=None, shear_type=None, seed=10, steps=N
     branches = [ (experiment, obs_type, shear_type,
                   builders[experiment](root, obs_type, shear_type,
                                        gal_dir, ps_dir, opt_psf_dir, atmos_ps_dir, public_dir,
+                                       draw_psf_src,
                                        truth_dir, preload, nproc, gal_pairs))
                         for experiment in experiments
                         for obs_type in obs_types
