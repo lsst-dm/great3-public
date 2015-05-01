@@ -1,0 +1,5 @@
+setupRequired(GalSim)
+setupRequired(numpy)
+setupRequired(pyfits)
+envPrepend(PYTHONPATH, ${PRODUCT_DIR}/lib/python)
+envPrepend(PATH, ${PRODUCT_DIR}/bin)
