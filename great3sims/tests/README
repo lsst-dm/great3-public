@@ -30,5 +30,4 @@ To run the real_galaxy test,
 
 
 Using the default constants.py creates a very long run.  If you are just doing a trial,
-replace great3sims/constants.py with the file tests/great3sims/constants.small.
-This will run with only one subfield and a 10x10 galaxy sample.
+the sample scripts here overide the defaults so that only one image is produced.
