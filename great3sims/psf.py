@@ -1406,7 +1406,7 @@ class DrawPSFBuilder(PSFBuilder):
         # assume that the psfs will come from numbered files in the directory
         # where the draw_psf_src file is supposed to be. In either case, if the
         # draw_psf_src is named foo.fits, the psfs are named foo_n.fits.
-       
+
         index = self.draw_psf_src.find('.fits')
         if index < 0: format = self.draw_psf_src + '_%d'
         else:
@@ -1415,42 +1415,61 @@ class DrawPSFBuilder(PSFBuilder):
         # if the file self.draw_psf_src exists, assume it is a multi-hdu
         # file containing a collection of psfs, and open if for access
         hdus = None
-        if os.path.exists(self.draw_psf_src):
+        if os.path.exists(self.draw_psf_src) and os.path.isfile(self.draw_psf_src):
             hdus = pyfits.open(self.draw_psf_src)
             psf_count = len(hdus)
-
+            self.psf_numbers = None
         # if not, just enumerate the individual numbered fits files in
         # the same directory
         else:
-            psf_count = 0
-            while os.path.exists(format%(psf_count+1,)):
-                psf_count += 1
-            print "psf_count = ", psf_count
-        # now randomly assign availabel psfs to the individual records,
+            listing = os.listdir(self.draw_psf_src)
+            self.psf_numbers = []
+            for file in listing:
+                index1 = file.find("psfs_")
+                index2 = file.find(".fits")
+                if index1 < 0 or index2 < 0: continue
+                number = file[index1+5:index2]
+                if number.isdigit():
+                    self.psf_numbers.append(int(number))
+            psf_count = len(self.psf_numbers)
+        # now randomly assign available psfs to the individual records,
         # expanding those which are not already there from the hdus
         for record in catalog:
             # select a random hdu
-            psf_number = int(math.floor(rng() * psf_count)) + 1 
+            psf_number = int(math.floor(rng() * psf_count))
+            if not self.psf_numbers == None:
+                psf_number = self.psf_numbers[psf_number]
+            else:
+                filename = format%psf_number
+                if not os.path.exists(filename):
+                    psf = pyfits.PrimaryHDU(hdus[psf_number].data)
+                    psf.header.append("GS_SCALE")
+                    psf.header["GS_SCALE"] = 0.2
+                    psf.header["CRVAL1"] = 0.0
+                    psf.header["CRVAL2"] = 0.0
+                    psf.header["CUNIT1"] = "deg"
+                    psf.header["CUNIT2"] = "deg"
+                    psf.header["CRPIX1"] = 0
+                    psf.header["CRPIX2"] = 0
+                    psf.header["CD1_1"] = 5.55e-05
+                    psf.header["CD1_2"] = 0.0
+                    psf.header["CD2_1"] = 0.0
+                    psf.header["CD2_2"] = 5.55e-05
+                    psf.writeto(filename)
+            print psf_number
             record["psf_number"] = psf_number
-            filename = format%psf_number
-            if not os.path.exists(filename):
-                psf = pyfits.PrimaryHDU(hdus[psf_number-1].data)
-                psf.header.append("GS_SCALE")
-                psf.header["GS_SCALE"] = 0.02
-                psf.writeto(filename)
-        if hdus: hdus.close()
-
+                
     def makeConfigDict(self, use_zero_index=True):
         """Routine to write the PSF-related parts of the config file used by GalSim to generate
         images."""
-        
         index = self.draw_psf_src.find('.fits')
-        if index < 0: format = self.draw_psf_src + '_%d'
+        if index < 0: format = self.draw_psf_src + '/psfs_%d.fits'
         else:
             format = self.draw_psf_src[:index] + '_%d' + self.draw_psf_src[index:]
         
         d = {
             'type':'InterpolatedImage',
+            'scale': .2,
             'image':
                 {
                     'type': 'FormattedStr',
