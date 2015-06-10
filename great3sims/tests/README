@@ -28,7 +28,4 @@ To run the real_galaxy test,
 
 4. The results are place in tests/real_galaxy/ground/constant.
 
-
-Using the default constants.py creates a very long run.  If you are just doing a trial,
-replace great3sims/constants.py with the file tests/great3sims/constants.small.
-This will run with only one subfield and a 10x10 galaxy sample.
+control.py and real_galaxy.py set values from control.py which allow short, test runs to be done
