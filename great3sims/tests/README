@@ -29,3 +29,6 @@ To run the real_galaxy test,
 4. The results are place in tests/real_galaxy/ground/constant.
 
 control.py and real_galaxy.py set values from control.py which allow short, test runs to be done
+Note that the max_subfield parameter must be set on the input to great3sims.run() because of a bug.
+Using the default constants.py creates a very long run.  If you are just doing a trial,
+the sample scripts here overide the defaults so that only one image is produced.
