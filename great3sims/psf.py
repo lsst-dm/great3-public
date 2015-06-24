@@ -149,7 +149,7 @@ class ConstPSFBuilder(PSFBuilder):
     # For lam/diam, Euclid has ~0.1375".
     #               WFIRST has a range for the different bands, but with 2.4m mirror and 1.1 micron,
     #               it is 0.0945".
-    # In terms of sampling, we use the correspondence between OpticalPSF <-> Airy 
+    # In terms of sampling, we use the correspondence between OpticalPSF <-> Airy
     # and FWHM >~ 2 pix. For an Airy, the FWHM is very close to lam/diam.  We want to be
     # Nyquist sampled at 0.05" pixels, so we need lam/diam > 0.1" (roughly).  For the multiepoch
     # case in space, we want to be undersampled by a factor of 2 at 0.1" pixels, so we need
@@ -565,8 +565,8 @@ class ConstPSFBuilder(PSFBuilder):
                     {
                         'type' : 'Kolmogorov',
                         'fwhm' : { 'type' : 'Catalog', 'col' : 'atmos_psf_fwhm' },
-                        'ellip' : { 
-                            'type' : 'EBeta', 
+                        'ellip' : {
+                            'type' : 'EBeta',
                             'e' : { 'type' : 'Catalog', 'col' : 'atmos_psf_e' },
                             'beta' : { 'type' : 'Deg',
                                        'theta' : { 'type' : 'Catalog', 'col' : 'atmos_psf_beta' } }
@@ -574,7 +574,7 @@ class ConstPSFBuilder(PSFBuilder):
                     },
                     d  # The above constructed OpticalPSF
                 ]
-            } 
+            }
         else:
             d = {
                 'type' : 'Convolve',
@@ -582,18 +582,18 @@ class ConstPSFBuilder(PSFBuilder):
                     {
                         'type' : 'Gaussian',
                         'sigma' : { 'type' : 'Catalog', 'col' : 'opt_psf_jitter_sigma' },
-                        'ellip' : { 
-                            'type' : 'EBeta', 
+                        'ellip' : {
+                            'type' : 'EBeta',
                             'e' : { 'type' : 'Catalog', 'col' : 'opt_psf_jitter_e' },
                             'beta' : { 'type' : 'Deg',
-                                       'theta' : { 'type' : 'Catalog', 
+                                       'theta' : { 'type' : 'Catalog',
                                                    'col' : 'opt_psf_jitter_beta' } }
                         }
                     },
                     {
                         'type' : 'Gaussian',
                         'sigma' : { 'type' : 'Catalog', 'col' : 'opt_psf_charge_sigma' },
-                        'ellip' : { 
+                        'ellip' : {
                             'type' : 'E1E2',
                             'e1' : { 'type' : 'Catalog', 'col' : 'opt_psf_charge_e1' },
                             'e2' : 0
@@ -601,11 +601,11 @@ class ConstPSFBuilder(PSFBuilder):
                     },
                     d  # The above constructed OpticalPSF
                 ]
-            } 
+            }
 
         # The parameters here are constant, so set index=0 for all Catalog entries.
-        # However, when we are building the star_test version, we don't want to zero out the 
-        # index, since in that case, the index refers to which field, instead of which star 
+        # However, when we are building the star_test version, we don't want to zero out the
+        # index, since in that case, the index refers to which field, instead of which star
         # in one field.  Hence in that case, we use use_zero_index=False.
         if use_zero_index: UseZeroIndex(d)
 
@@ -757,7 +757,7 @@ class VariablePSFBuilder(PSFBuilder):
     fwhm_min = 0.5
     fwhm_max = 0.86
     # Later on we will draw from this distribution using:
-    # dd = galsim.DistDeviate(uniform_deviate, 
+    # dd = galsim.DistDeviate(uniform_deviate,
     #                        function=galsim.LookupTable(fwhm_arcsec, freq, interpolant='linear'))
 
     # For atmospheric PSF anisotropy, we have some basic numbers that we will use to make PSF
@@ -1106,7 +1106,7 @@ class VariablePSFBuilder(PSFBuilder):
 
                 import os
                 # this is actually a list (all tiles)
-                atmos_psf_pk_amp = psf_parameters["atmos_psf_pk_amp"] 
+                atmos_psf_pk_amp = psf_parameters["atmos_psf_pk_amp"]
                 atmos_psf_pk_theta0 = psf_parameters["atmos_psf_pk_theta0"]
 
                 # To begin, we have to read in some tabulated P(k), one per tile.
@@ -1264,7 +1264,7 @@ class VariablePSFBuilder(PSFBuilder):
                     mu = 1./((1.-kappa)**2 - (g1**2 + g2**2))
                     catalog["atmos_psf_fwhm"][tile_ind == iter_tile_ind] = \
                         psf_parameters["atmos_psf_fwhm"][iter_tile_ind] * mu
-        
+
         # Finally, we can save the information that goes in the catalog that is the same for all
         # objects.  We need this to make the optical PSF either for space or for ground.
         for record in catalog:
@@ -1301,15 +1301,15 @@ class VariablePSFBuilder(PSFBuilder):
                     {
                         'type' : 'Kolmogorov',
                         'fwhm' : { 'type' : 'Catalog', 'col' : 'atmos_psf_fwhm' },
-                        'ellip' : { 
-                            'type' : 'E1E2', 
+                        'ellip' : {
+                            'type' : 'E1E2',
                             'e1' : { 'type' : 'Catalog', 'col' : 'atmos_psf_e1' },
                             'e2' : { 'type' : 'Catalog', 'col' : 'atmos_psf_e2' }
                         }
                     },
                     d  # The above constructed OpticalPSF
                 ]
-            } 
+            }
         else:
             d = {
                 'type' : 'Convolve',
@@ -1317,18 +1317,18 @@ class VariablePSFBuilder(PSFBuilder):
                     {
                         'type' : 'Gaussian',
                         'sigma' : { 'type' : 'Catalog', 'col' : 'opt_psf_jitter_sigma' },
-                        'ellip' : { 
-                            'type' : 'EBeta', 
+                        'ellip' : {
+                            'type' : 'EBeta',
                             'e' : { 'type' : 'Catalog', 'col' : 'opt_psf_jitter_e' },
                             'beta' : { 'type' : 'Deg',
-                                       'theta' : { 'type' : 'Catalog', 
+                                       'theta' : { 'type' : 'Catalog',
                                                    'col' : 'opt_psf_jitter_beta' } }
                         }
                     },
                     {
                         'type' : 'Gaussian',
                         'sigma' : { 'type' : 'Catalog', 'col' : 'opt_psf_charge_sigma' },
-                        'ellip' : { 
+                        'ellip' : {
                             'type' : 'E1E2',
                             'e1' : { 'type' : 'Catalog', 'col' : 'opt_psf_charge_e1' },
                             'e2' : 0
@@ -1336,7 +1336,7 @@ class VariablePSFBuilder(PSFBuilder):
                     },
                     d  # The above constructed OpticalPSF
                 ]
-            } 
+            }
 
         return d
 
@@ -1382,10 +1382,22 @@ class DrawPSFBuilder(PSFBuilder):
     def __init__(self, obs_type, multiepoch, shear_type, draw_psf_src):
         self.obs_type = obs_type
         self.draw_psf_src = os.path.abspath(draw_psf_src)
+        filename = os.path.basename(self.draw_psf_src)
+        fin = open(self.draw_psf_src, "r")
+        #   The input file draw_psf_src is a file which contains a list of all of the available Psfs
+        #   It contains the name of the mini-library which contains the psf, the "GroupIndex" which
+        #   is the numeric index of the library, the "PsfIndex", which is the hdu index in the mini-
+        #   library, and the "PsfNumber", which is the index of the star in the PhoSim pars file
+        self.psfInfos = []
+        while True:
+            entry = fin.readline().split()
+            if len(entry) == 0:
+                break
+            self.psfInfos.append([entry[0], int(entry[1]), int(entry[1]), int(entry[2]), False])
+
         self.multiepoch = multiepoch
         self.variable_psf = False # by definition, so it doesn't get passed in as an arg
         self.shear_type = shear_type
-        #self.use_aber = []
 
     def generateFieldParameters(self, rng, field_index):
         schema = []
@@ -1393,64 +1405,64 @@ class DrawPSFBuilder(PSFBuilder):
         return psf_dict
 
     def generateEpochParameters(self, rng, subfield_index, epoch_index, field_parameters):
-        schema = [("psf_number", int),]
+        #   These schema members pass info about the Psf used and how to find it.
+        schema = [("psf_number", int), ("psf_index", int), ("psf_group", int),]
         psf_dict = dict(schema=schema)
         return psf_dict
 
     def generateCatalog(self, rng, catalog, parameters, offsets, normalized):
-
-        # The catalog will contain an entry for each record 'psf_number'
-        # corresponding to the random psf assigned to this galaxy.  In
-        # this routine, the psfs are generated if they come from a single
-        # multiple hdu catalog.  But if the draw_psf_src file is not found,
-        # assume that the psfs will come from numbered files in the directory
-        # where the draw_psf_src file is supposed to be. In either case, if the
-        # draw_psf_src is named foo.fits, the psfs are named foo_n.fits.
-       
-        index = self.draw_psf_src.find('.fits')
-        if index < 0: format = self.draw_psf_src + '_%d'
-        else:
-            format = self.draw_psf_src[:index] + '_%d' + self.draw_psf_src[index:]
-
-        # if the file self.draw_psf_src exists, assume it is a multi-hdu
-        # file containing a collection of psfs, and open if for access
-        hdus = None
-        if os.path.exists(self.draw_psf_src):
-            hdus = pyfits.open(self.draw_psf_src)
-            psf_count = len(hdus)
-
-        # if not, just enumerate the individual numbered fits files in
-        # the same directory
-        else:
-            psf_count = 0
-            while os.path.exists(format%(psf_count+1,)):
-                psf_count += 1
-            print "psf_count = ", psf_count
-        # now randomly assign availabel psfs to the individual records,
-        # expanding those which are not already there from the hdus
+        #   The psfInfos structure is a list of all the available Psfs,
+        #   Randomly assign available psfs to the individual records, and mark each
+        #   one which is choosen for expansion.  Note that the "psf_group" number is
+        #   another way to refer to the file named psfInfo[0], but using a number.
         for record in catalog:
             # select a random hdu
-            psf_number = int(math.floor(rng() * psf_count)) + 1 
-            record["psf_number"] = psf_number
-            filename = format%psf_number
-            if not os.path.exists(filename):
-                psf = pyfits.PrimaryHDU(hdus[psf_number-1].data)
+            psfInfo = self.psfInfos[int(math.floor(rng() * len(self.psfInfos)))]
+            record["psf_group"] = psfInfo[1]
+            record["psf_index"] = psfInfo[2]
+            record["psf_number"] = psfInfo[3]
+            psfInfo[4] = True
+        # write the tagged entries in the order of the psfInfos file.  This
+        # is sorted by library, minimizing the amount of file I/O required to fetch the psfs
+        dirname = os.path.dirname(self.draw_psf_src)
+        currentPsfFile = None
+        for i in range(len(self.psfInfos)):
+            psfInfo = self.psfInfos[i]
+            if psfInfo[4]:
+                if psfInfo[0] != currentPsfFile:
+                    if not currentPsfFile is None:
+                        hdus.close()
+                        del hdus
+                    currentPsfFile = psfInfo[0]
+                    filename = dirname + "/" + psfInfo[0]
+                    print "opening ", filename
+                    hdus = pyfits.open(filename)
+                print len(hdus), psfInfo[2]
+                psf = pyfits.PrimaryHDU(hdus[psfInfo[2]-1].data)
                 psf.header.append("GS_SCALE")
-                psf.header["GS_SCALE"] = 0.02
-                psf.writeto(filename)
-        if hdus: hdus.close()
+                psf.header["GS_SCALE"] = 0.2
+                psf.header["CRVAL1"] = 0.0
+                psf.header["CRVAL2"] = 0.0
+                psf.header["CUNIT1"] = "deg"
+                psf.header["CUNIT2"] = "deg"
+                psf.header["CRPIX1"] = 0
+                psf.header["CRPIX2"] = 0
+                psf.header["CD1_1"] = 5.55e-05
+                psf.header["CD1_2"] = 0.0
+                psf.header["CD2_1"] = 0.0
+                psf.header["CD2_2"] = 5.55e-05
+                format = dirname + "/psf_%d.fits"
+                filename = format%psfInfo[3]
+                psf.writeto(filename, clobber=True)
 
     def makeConfigDict(self, use_zero_index=True):
         """Routine to write the PSF-related parts of the config file used by GalSim to generate
         images."""
-        
-        index = self.draw_psf_src.find('.fits')
-        if index < 0: format = self.draw_psf_src + '_%d'
-        else:
-            format = self.draw_psf_src[:index] + '_%d' + self.draw_psf_src[index:]
-        
+        format = os.path.dirname(self.draw_psf_src) + "/psf_%d.fits"
+
         d = {
             'type':'InterpolatedImage',
+            'scale': .2,
             'image':
                 {
                     'type': 'FormattedStr',
