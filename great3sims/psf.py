@@ -1382,7 +1382,6 @@ class DrawPSFBuilder(PSFBuilder):
     def __init__(self, obs_type, multiepoch, shear_type, draw_psf_src):
         self.obs_type = obs_type
         self.draw_psf_src = os.path.abspath(draw_psf_src)
-        filename = os.path.basename(self.draw_psf_src)
         fin = open(self.draw_psf_src, "r")
         #   The input file draw_psf_src is a file which contains a list of all of the available Psfs
         #   It contains the name of the mini-library which contains the psf, the "GroupIndex" which
@@ -1406,21 +1405,28 @@ class DrawPSFBuilder(PSFBuilder):
 
     def generateEpochParameters(self, rng, subfield_index, epoch_index, field_parameters):
         #   These schema members pass info about the Psf used and how to find it.
-        schema = [("psf_number", int), ("psf_index", int), ("psf_group", int),]
+        schema = [("psf_number", int), ("psf_index", int), ("psf_library", int)]
         psf_dict = dict(schema=schema)
         return psf_dict
 
     def generateCatalog(self, rng, catalog, parameters, offsets, normalized):
         #   The psfInfos structure is a list of all the available Psfs,
         #   Randomly assign available psfs to the individual records, and mark each
-        #   one which is choosen for expansion.  Note that the "psf_group" number is
+        #   one which is choosen for expansion.  Note that the "psf_library" number is
         #   another way to refer to the file named psfInfo[0], but using a number.
         for record in catalog:
             # select a random hdu
             psfInfo = self.psfInfos[int(math.floor(rng() * len(self.psfInfos)))]
-            record["psf_group"] = psfInfo[1]
+            #   Place the information which will be needed by downstream programs in the afw catalog
+            #   The raft number is also the number of the psf_library. (GalSim only allows scalars)
+            #   The psf_number is the entry number in the original catalog of Psfs
+            #   psf_index is and index to the hdu
+            index = psfInfo[0].find("sf_library_")
+            groupstr = psfInfo[0][index+11 : index+13]
+            record["psf_library"] = int(groupstr)
             record["psf_index"] = psfInfo[2]
             record["psf_number"] = psfInfo[3]
+            #   tag this psfInfo to indicate that this one is used, and needs to be written to disk.
             psfInfo[4] = True
         # write the tagged entries in the order of the psfInfos file.  This
         # is sorted by library, minimizing the amount of file I/O required to fetch the psfs
@@ -1434,23 +1440,12 @@ class DrawPSFBuilder(PSFBuilder):
                         hdus.close()
                         del hdus
                     currentPsfFile = psfInfo[0]
-                    filename = dirname + "/" + psfInfo[0]
-                    print "opening ", filename
+                    filename = os.path.join(dirname, psfInfo[0])
                     hdus = pyfits.open(filename)
-                print len(hdus), psfInfo[2]
                 psf = pyfits.PrimaryHDU(hdus[psfInfo[2]-1].data)
+                #   This header info seems to be needed by GalSim, but I don't know why.
                 psf.header.append("GS_SCALE")
                 psf.header["GS_SCALE"] = 0.2
-                psf.header["CRVAL1"] = 0.0
-                psf.header["CRVAL2"] = 0.0
-                psf.header["CUNIT1"] = "deg"
-                psf.header["CUNIT2"] = "deg"
-                psf.header["CRPIX1"] = 0
-                psf.header["CRPIX2"] = 0
-                psf.header["CD1_1"] = 5.55e-05
-                psf.header["CD1_2"] = 0.0
-                psf.header["CD2_1"] = 0.0
-                psf.header["CD2_2"] = 5.55e-05
                 format = dirname + "/psf_%d.fits"
                 filename = format%psfInfo[3]
                 psf.writeto(filename, clobber=True)
@@ -1472,5 +1467,7 @@ class DrawPSFBuilder(PSFBuilder):
         }
         return d
 
+    #   Because this method is not defined, you cannot asks great3sims.run() to create
+    #   The output objects itself.  You MUST run galsim on the output yaml files
     def makeGalSimObject(self, record, parameters):
         pass
