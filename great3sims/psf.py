@@ -1388,10 +1388,12 @@ class DrawPSFBuilder(PSFBuilder):
         #   is the numeric index of the library, the "PsfIndex", which is the hdu index in the mini-
         #   library, and the "PsfNumber", which is the index of the star in the PhoSim pars file
         self.psfInfos = []
-        while True:
-            entry = fin.readline().split()
-            if len(entry) == 0:
-                break
+        for line in fin:
+            entry = line.split()
+            while not entry[1].isdigit():
+                if len(entry[1]) == 0:
+                    raise Exception("psfInfo file error: raft number must contain a number")
+                entry[1] = entry[1][1:]
             self.psfInfos.append([entry[0], int(entry[1]), int(entry[1]), int(entry[2]), False])
 
         self.multiepoch = multiepoch
@@ -1448,7 +1450,9 @@ class DrawPSFBuilder(PSFBuilder):
                 psf.header["GS_SCALE"] = 0.2
                 format = dirname + "/psf_%d.fits"
                 filename = format%psfInfo[3]
-                psf.writeto(filename, clobber=True)
+                if not os.path.exists(filename):
+                    psf.writeto(filename, clobber=True)
+ 
 
     def makeConfigDict(self, use_zero_index=True):
         """Routine to write the PSF-related parts of the config file used by GalSim to generate

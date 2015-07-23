@@ -27,18 +27,21 @@ import galsim
 import numpy as np
 from . import constants
 
-def makeBuilder(shear_type, obs_type, multiepoch, ps_dir):
+def makeBuilder(shear_type, obs_type, multiepoch, ps_dir, shear_value, shear_angle):
     """Return a ShearBuilder appropriate for the given options.
 
     @param[in] shear_type  Shear field type: either "constant" or "variable".
     @param[in] obs_type    Observation type: either "ground" or "space".
     @param[in] multiepoch  Multiepoch?  True or False
     @param[in] ps_dir      Directory with tabulated iCosmo shear power spectra.
+    @param[in] shear_value Value for constant shear experiments
+    @param[in] shear_angle Value for constant shear experiments
     """
     if shear_type == 'variable':
         return VariableShearBuilder(ps_dir=ps_dir, obs_type=obs_type, multiepoch=multiepoch)
     elif shear_type == 'constant':
-        return ConstantShearBuilder(obs_type=obs_type, multiepoch=multiepoch)
+        return ConstantShearBuilder(obs_type=obs_type, multiepoch=multiepoch, shear_value=shear_value,
+                                    shear_angle=shear_angle)
     else:
         raise ValueError("Invalid shear_type: %s - must be 'constant' or 'variable'" % shear_type)
 
@@ -102,18 +105,27 @@ class ConstantShearBuilder(ShearBuilder):
     the unit disk, which emphasizes somewhat larger shear values.
     """
 
-    def __init__(self, obs_type, multiepoch, min_g=1E-2, max_g=5E-2):
-        self.min_g = min_g
-        self.max_g = max_g
+    def __init__(self, obs_type, multiepoch, shear_value=None, shear_angle=None, min_g=1E-2, max_g=5E-2):
+        if not shear_value is None:
+            self.min_g = shear_value * .999
+            self.max_g = shear_value * 1.001
+        else:
+            self.min_g = min_g
+            self.max_g = max_g
+        self.shear_angle=shear_angle
         self.obs_type = obs_type
         self.multiepoch = multiepoch
 
     def generateFieldParameters(self, rng, field_index):
         """Generate the constant shear values (two components) for this field."""
-        theta = 2.0*rng()*np.pi
+        if self.shear_angle == None:
+            theta = 2.0*rng()*np.pi
+        else:
+            theta = self.shear_angle*np.pi/180.0
         shear_rng = galsim.DistDeviate(rng, function = lambda g : g,
                                        x_min = self.min_g, x_max = self.max_g)
         g = shear_rng()
+        print g, theta*180.0/np.pi
         return dict(g1=g*np.cos(2.0*theta), g2=g*np.sin(2.0*theta), mu=1.)
 
     def generateSubfieldParameters(self, rng, subfield_index, field_parameters):

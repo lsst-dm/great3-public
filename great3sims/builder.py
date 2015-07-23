@@ -47,6 +47,8 @@ class SimBuilder(object):
     real_galaxy = False
     variable_psf = False
     draw_psf_src = None
+    shear_value = None
+    shear_angle = None
     multiepoch = False
 
     @staticmethod
@@ -65,7 +67,7 @@ class SimBuilder(object):
         return cls
 
     def __init__(self, root, obs_type, shear_type, gal_dir, ps_dir, opt_psf_dir, atmos_ps_dir,
-                 public_dir, draw_psf_src, truth_dir, preload=False, nproc=-1, gal_pairs=True):
+                 public_dir, draw_psf_src, shear_value, shear_angle, truth_dir, preload=False, nproc=-1, gal_pairs=True):
         """Initialize a builder for the given `obs_type` and `shear_type`.
 
         @param[in] root         Root directory for generated files.
@@ -86,6 +88,8 @@ class SimBuilder(object):
                                 to cancel out shape noise, or not?  This option is ignored for
                                 variable shear branches. [default: True]
         @param[in] draw_psf_src Draw psf from a distribution?
+        @param[in] shear_value  Value for constant shear experiments
+        @param[in] shear_angle  Angle for constant shear experiments
         """
         self.obs_type = obs_type
         self.shear_type = shear_type
@@ -93,6 +97,8 @@ class SimBuilder(object):
         self.truth_dir = truth_dir
         self.preload = preload
         self.draw_psf_src = draw_psf_src
+        self.shear_value = shear_value
+        self.shear_angle = shear_angle
         # Below we initialize the builders for the PSF, shear, galaxy population, and noise field.
         # They each require various bits of information as appropriate (e.g., only the PSF builder
         # needs to know where information about atmospheric PSFs lives).
@@ -104,7 +110,8 @@ class SimBuilder(object):
                                                       atmos_ps_dir=atmos_ps_dir,
                                                       draw_psf_src=draw_psf_src)
         self.shear_builder = great3sims.shear.makeBuilder(shear_type=shear_type, obs_type=obs_type,
-                                                          multiepoch=self.multiepoch, ps_dir=ps_dir)
+                                                          multiepoch=self.multiepoch, ps_dir=ps_dir,
+                                                          shear_value=shear_value, shear_angle=shear_angle)
         self.galaxy_builder = great3sims.galaxies.makeBuilder(real_galaxy=self.real_galaxy,
                                                               obs_type=obs_type,
                                                               shear_type=shear_type,
