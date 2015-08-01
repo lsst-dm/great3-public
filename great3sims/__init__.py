@@ -38,6 +38,8 @@ def run(root, experiments=None, obs_type=None, shear_type=None, seed=10, steps=N
         opt_psf_dir = '../inputs/optical-psfs',
         atmos_ps_dir = '../inputs/atmospsf/pk_math',
         draw_psf_src = None,
+        shear_value = None,
+        shear_angle = None,
         public_dir='public', truth_dir='truth', preload=False, nproc=-1,
         gal_pairs=True):
     """Top-level driver for GREAT3 simulation code.
@@ -133,6 +135,8 @@ def run(root, experiments=None, obs_type=None, shear_type=None, seed=10, steps=N
     @param[in] draw_psf_src  Fits file containing psf population as multiple hdus
                              Or base filename of sequentially numbered fits files, where e.g.,
                              psf.fits means psf_1.fits ... psf_n.fits.  Directory must be writable.
+    @param[in] shear_value   Shear value for constant shear experiments
+    @param[in] shear_angle   Shear angle in degrees for constant shear experiments
     """
     import sys
 
@@ -171,7 +175,7 @@ def run(root, experiments=None, obs_type=None, shear_type=None, seed=10, steps=N
     branches = [ (experiment, obs_type, shear_type,
                   builders[experiment](root, obs_type, shear_type,
                                        gal_dir, ps_dir, opt_psf_dir, atmos_ps_dir, public_dir,
-                                       draw_psf_src,
+                                       draw_psf_src, shear_value, shear_angle,
                                        truth_dir, preload, nproc, gal_pairs))
                         for experiment in experiments
                         for obs_type in obs_types
