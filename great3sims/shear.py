@@ -107,8 +107,8 @@ class ConstantShearBuilder(ShearBuilder):
 
     def __init__(self, obs_type, multiepoch, shear_value=None, shear_angle=None, min_g=1E-2, max_g=5E-2):
         if not shear_value is None:
-            self.min_g = shear_value * .999
-            self.max_g = shear_value * 1.001
+            self.min_g = shear_value * .999999999
+            self.max_g = shear_value * 1.00000001
         else:
             self.min_g = min_g
             self.max_g = max_g
